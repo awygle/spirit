@@ -1,0 +1,6 @@
+*.o
+*.d
+.*.swp
+*.gch
+/.cproject
+/.project
