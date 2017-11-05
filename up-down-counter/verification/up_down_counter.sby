@@ -1,0 +1,14 @@
+[options]
+mode prove
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal up_down_counter.v
+read_verilog -formal up_down_counter_formal.v
+prep -top up_down_counter_tb
+
+[files]
+up_down_counter.v
+verification/up_down_counter_formal.v
