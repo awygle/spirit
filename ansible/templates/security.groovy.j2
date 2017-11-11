@@ -1,0 +1,21 @@
+#!groovy
+import jenkins.model.*
+import hudson.security.*
+import java.util.logging.Logger
+import java.util.logging.Level
+
+def instance = Jenkins.getInstance()
+
+def logger = Logger.getLogger(Jenkins.class.getName())
+
+logger.log(Level.WARNING, "Running security init script")
+
+def strategy = new hudson.security.FullControlOnceLoggedInAuthorizationStrategy()
+strategy.setAllowAnonymousRead(false)
+
+def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+hudsonRealm.createAccount("{{ jenkins_admin_username }}", "{{ jenkins_admin_password}}" )
+
+instance.setSecurityRealm(hudsonRealm)
+instance.setAuthorizationStrategy(strategy)
+instance.save()

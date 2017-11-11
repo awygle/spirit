@@ -1,0 +1,56 @@
+---
+- hosts: build
+  remote_user: awygle
+  become: yes
+  vars:
+          my_jenkins_params:
+                  url_username: "{{ jenkins_admin_username }}"
+                  url: http://localhost:8080
+  tasks:
+          - name: install jenkins key
+            apt_key: url=https://pkg.jenkins.io/debian/jenkins-ci.org.key
+          - name: install jenkins repository
+            apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/'
+          - name: install jenkins
+            apt: name=jenkins state=present
+          - name: allow jenkins traffic
+            ufw: rule=allow port=8080
+          - name: disable jenkins startup wizard
+            lineinfile:
+                    dest: /etc/init.d/jenkins
+                    regexp: '^JAVA_ARGS='
+                    line: 'JAVA_ARGS="-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false"'
+                    insertbefore: '^DAEMON_ARGS='
+          - name: create init scripts directory
+            file: path={{ jenkins_home }}/init.groovy.d state=directory owner=jenkins group=jenkins mode=0775
+          - name: set up jenkins pw
+            template: src=security.groovy.j2 dest={{ jenkins_home }}/init.groovy.d/security.groovy
+          - name: start jenkins
+            service: name=jenkins state=started
+          - name: restart jenkins
+            service: name=jenkins state=restarted
+          - name: wait for jenkins to be started
+            uri:
+                    url: http://localhost:8080
+                    user: "{{ jenkins_admin_username }}"
+                    password: "{{ jenkins_admin_password }}"
+                    status_code: 200
+                    timeout: 5
+                    force_basic_auth: yes
+            register: jenkins_service_status
+            retries: 60
+            delay: 5
+            until: >
+                    'status' in jenkins_service_status and
+                    jenkins_service_status['status'] == 200
+          - name: install jenkins git plugin
+            jenkins_plugin:
+                    name: git
+                    params: "{{ my_jenkins_params }}"
+                    url_password: "{{ jenkins_admin_password }}"
+          - name: install docker key
+            apt_key: url=https://download.docker.com/linux/ubuntu/gpg state=present
+          - name: install docker repo
+            apt_repository: repo='deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable' state=present
+          - name: install docker
+            apt: name=docker-ce state=installed

@@ -1,0 +1,4 @@
+---
+jenkins_home: /var/lib/jenkins
+jenkins_admin_username: admin
+jenkins_admin_password: ygleWAnd21
