@@ -7,7 +7,7 @@ smtbmc z3
 [script]
 read_verilog -formal up_down_counter.v
 read_verilog -formal up_down_counter_formal.v
-prep -top up_down_counter_tb
+prep -top up_down_counter_formal
 
 [files]
 up_down_counter.v
