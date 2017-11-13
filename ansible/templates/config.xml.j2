@@ -3,11 +3,7 @@
   <actions/>
   <description></description>
   <keepDependencies>false</keepDependencies>
-  <properties>
-    <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin@1.5.1">
-      <gitLabConnection></gitLabConnection>
-    </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
-  </properties>
+  <properties/>
   <scm class="hudson.plugins.git.GitSCM" plugin="git@3.6.4">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
@@ -31,25 +27,10 @@
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
   <triggers>
-    <com.dabsquared.gitlabjenkins.GitLabPushTrigger plugin="gitlab-plugin@1.5.1">
-      <spec></spec>
-      <triggerOnPush>true</triggerOnPush>
-      <triggerOnMergeRequest>true</triggerOnMergeRequest>
-      <triggerOnPipelineEvent>false</triggerOnPipelineEvent>
-      <triggerOnAcceptedMergeRequest>false</triggerOnAcceptedMergeRequest>
-      <triggerOnClosedMergeRequest>false</triggerOnClosedMergeRequest>
-      <triggerOpenMergeRequestOnPush>never</triggerOpenMergeRequestOnPush>
-      <triggerOnNoteRequest>true</triggerOnNoteRequest>
-      <noteRegex>Jenkins please retry a build</noteRegex>
-      <ciSkip>true</ciSkip>
-      <skipWorkInProgressMergeRequest>true</skipWorkInProgressMergeRequest>
-      <setBuildDescription>true</setBuildDescription>
-      <branchFilterType>All</branchFilterType>
-      <includeBranchesSpec></includeBranchesSpec>
-      <excludeBranchesSpec></excludeBranchesSpec>
-      <targetBranchRegex></targetBranchRegex>
-      <secretToken>{AQAAABAAAAAQK9MbA6VkXzmxU9aBFMZ1nYMXjUhYjL+QexNRmRpkMGw=}</secretToken>
-    </com.dabsquared.gitlabjenkins.GitLabPushTrigger>
+    <hudson.triggers.SCMTrigger>
+      <spec>H H * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <builders>
