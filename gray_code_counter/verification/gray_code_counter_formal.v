@@ -1,15 +1,14 @@
-module up_down_counter_formal ();
+module gray_code_counter_formal ();
 
-wire [7:0] counter_output;
+wire [7:0] binary_output;
+wire [7:0] gray_output;
 reg rst;
 reg clk;
 reg ce;
-reg up;
 
 initial begin
 	rst = 1'b1;
 	ce = 1'b1;
-	up = 1'b1;
 	#1000 rst = 1'b0;
 end
 
@@ -24,16 +23,16 @@ end
 	always #100 clk = (clk === 1'b0);
 `endif
 
-up_down_counter 
+gray_code_counter 
 #(
 	.WIDTH(8)
-) up_down_counter
+) gray_code_counter
 (
 	.rst_i(rst),
 	.clk_i(clk),
 	.ce_i(ce),
-	.up_i(up),
-	.count_o(counter_output)
+	.binary_o(binary_output),
+	.gray_o(gray_output)
 );
 
 endmodule

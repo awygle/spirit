@@ -1,0 +1,14 @@
+[options]
+mode prove
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal gray_code_counter.v
+read_verilog -formal gray_code_counter_formal.v
+prep -top gray_code_counter_formal
+
+[files]
+gray_code_counter.v
+verification/gray_code_counter_formal.v

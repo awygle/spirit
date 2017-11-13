@@ -3,7 +3,7 @@
 module up_down_counter
 #(
 	parameter WIDTH = 8,
-	parameter INIT = 8'h00,
+	parameter INIT = 8'h00
 )
 (
 	input wire rst_i,
