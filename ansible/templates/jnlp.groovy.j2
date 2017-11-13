@@ -1,0 +1,7 @@
+#!groovy
+
+import hudson.model.*;
+import jenkins.model.*;
+
+int port = "{{ jenkins_jnlp_port }}".toInteger()
+Jenkins.instance.setSlaveAgentPort(port)

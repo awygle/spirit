@@ -1,0 +1,24 @@
+#!groovy
+
+import com.microsoft.jenkins.containeragents.builders.*
+import jenkins.*
+import jenkins.model.*
+import hudson.*
+import hudson.model.*
+ 
+def myCloud = new AciCloudBuilder()
+    .withCloudName("spirit-cloud")
+    .withAzureCredentialsId("spirit-sp")
+    .withResourceGroup("{{ azure_resource_group }}")
+    .addNewTemplate()
+        .withImage("awygle/yosys:jenkinsv1")
+        .withName("spirit-template")
+        .withLabel("aci")
+    .endTemplate()
+    .build();
+ 
+def instance = Jenkins.getInstance();
+
+instance.clouds.add(myCloud);
+instance.save();
+

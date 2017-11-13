@@ -1,0 +1,14 @@
+#!groovy
+
+import com.cloudbees.plugins.credentials.impl.*;
+import com.cloudbees.plugins.credentials.*;
+import com.cloudbees.plugins.credentials.domains.*;
+
+Credentials c = (Credentials) new UsernamePasswordCredentialsImpl(
+  CredentialsScope.GLOBAL, 
+  'spirit-gitlab-creds', 
+  "Gitlab credentials for Spirit. Temporary.",
+  "{{ gitlab_username }}",
+  "{{ gitlab_password }}");
+
+SystemCredentialsProvider.getInstance().getStore().addCredentials(Domain.global(), c)
