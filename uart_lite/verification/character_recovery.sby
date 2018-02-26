@@ -1,0 +1,17 @@
+[options]
+mode cover
+depth 200
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal character_recovery.v
+read_verilog -formal bit_recovery.v
+read_verilog -formal character_recovery_formal.v
+prep -top character_recovery_formal
+
+[files]
+character_recovery.v
+bit_recovery.v
+verification/character_recovery_formal.v

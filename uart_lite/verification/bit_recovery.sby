@@ -1,0 +1,14 @@
+[options]
+mode cover
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal bit_recovery.v
+read_verilog -formal bit_recovery_formal.v
+prep -top bit_recovery_formal
+
+[files]
+bit_recovery.v
+verification/bit_recovery_formal.v
