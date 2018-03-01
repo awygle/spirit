@@ -2,6 +2,10 @@
 
 module character_recovery_formal ();
 
+parameter OVERSAMPLING = 17;
+parameter DATA_BITS = 7;
+parameter IDLE_POLARITY = 1;
+
 wire [7:0] char;
 wire valid;
 reg rst;
@@ -16,30 +20,33 @@ always @(posedge clk) begin
 end
 
 // Property: all accepted inputs well-formed, no invalid inputs accepted
-reg [151:0] f_hold;
+localparam OFFSET = (OVERSAMPLING / 2);
+localparam HOLD_LENGTH = ((OVERSAMPLING) * (DATA_BITS + 1)) + OFFSET;
+reg [HOLD_LENGTH-1:0] f_hold;
 integer f_i;
 always @(posedge clk) begin
-	f_hold[151] <= rx;
-	f_hold[0:150] <= f_hold[1:151];
+	f_hold[HOLD_LENGTH-1] <= rx;
+	f_hold[0:HOLD_LENGTH-2] <= f_hold[1:HOLD_LENGTH-1];
 	if (f_reset_in_past) begin
 		if (!rst && valid) begin
-			assert(f_hold[7]);
-			assert(~f_hold[151]);
-			for (f_i = 16; f_i < 136; f_i = f_i + 16)
-				assert(f_hold[f_i+7] == char[(f_i/16)-1]);
+			assert(f_hold[OFFSET-1] != IDLE_POLARITY);
+			assert(f_hold[HOLD_LENGTH-1] == IDLE_POLARITY);
+			for (f_i = OVERSAMPLING; f_i < (OVERSAMPLING * (DATA_BITS+1)); f_i = f_i + OVERSAMPLING)
+				assert(f_hold[f_i+(OFFSET-1)] == char[(f_i/OVERSAMPLING)-1]);
 		end
 	end
 end
 
 // Property: assertions of valid are at least 160 cycles apart
-reg [7:0] f_counter;
-initial f_counter = 8'd159;
+localparam TOTAL_BITS = OVERSAMPLING * (DATA_BITS + 2);
+reg [$clog2(TOTAL_BITS)-1:0] f_counter;
+initial f_counter = TOTAL_BITS - 1;
 always @(posedge clk) begin
-	if (f_counter < 8'd159) f_counter <= f_counter + 1'b1;
+	if (f_counter < TOTAL_BITS - 1) f_counter <= f_counter + 1'b1;
 	if (f_reset_in_past) begin
-		assume(f_counter <= 8'd159);
+		assume(f_counter <= TOTAL_BITS - 1);
 		if (valid) begin
-			assert(f_counter == 8'd159);
+			assert(f_counter == TOTAL_BITS - 1);
 			f_counter <= 8'd0;
 		end
 	end
@@ -47,7 +54,7 @@ always @(posedge clk) begin
 	// cycle that the controller asserts reset, we still consider the property
 	// to hold.
 	if (rst) begin
-		f_counter <= 8'd159;
+		f_counter <= TOTAL_BITS - 1;
 	end
 end
 
@@ -65,19 +72,20 @@ always @(posedge clk) begin
 end
 
 // Property: all valid inputs accepted
-reg [8:0] i;
+reg [DATA_BITS:0] i;
 always @(posedge clk) begin
 	if (f_reset_in_past) begin
-		for (i = 0; i < 9'd256; i = i + 1) begin
-			cover(valid && char == i[7:0]);
+		for (i = 0; i < 2**DATA_BITS; i = i + 1) begin
+			cover(valid && char == i[DATA_BITS-1:0]);
 		end
 	end
 end
 
 character_recovery
 #(
-	.OVERSAMPLING(16),
-	.DATA_BITS(8)
+	.OVERSAMPLING(OVERSAMPLING),
+	.IDLE_POLARITY(IDLE_POLARITY),
+	.DATA_BITS(DATA_BITS)
 ) character_recovery
 (
 	.rst_i(rst),

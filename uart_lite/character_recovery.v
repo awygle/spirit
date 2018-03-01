@@ -3,8 +3,9 @@
 module character_recovery
 #(
 	parameter OVERSAMPLING = 16,
-	parameter GLITCH_LENGTH = 1,
-	parameter DATA_BITS = 8
+	parameter IDLE_POLARITY = 1,
+	parameter DATA_BITS = 8,
+	
 )
 (
 	input rst_i,
@@ -31,12 +32,14 @@ wire counter_empty;
 assign counter_empty = counter == {COUNTSIZE{1'b0}};
 
 reg past_rx;
+wire start_bit_edge;
+assign start_bit_edge = (past_rx == IDLE_POLARITY) && (rx_i != IDLE_POLARITY);
 
 always @(posedge clk_i) begin
 	if (rst_i) begin
 		valid_o <= 1'b0;
 		state <= IDLE;
-		past_rx <= 1'b0;
+		past_rx <= IDLE_POLARITY;
 		counter <= {COUNTSIZE{1'b0}};
 		// No need to reset char_o
 	end
@@ -45,7 +48,7 @@ always @(posedge clk_i) begin
 		case (state)
 			IDLE: begin
 				valid_o <= 1'b0;
-				if (counter_empty && !past_rx && rx_i) begin
+				if (counter_empty && start_bit_edge) begin
 					state <= STARTING;
 					index <= {DATASIZE{1'b0}};
 					counter <= (OVERSAMPLING >> 1) - 1'b1;
@@ -54,7 +57,7 @@ always @(posedge clk_i) begin
 			STARTING: begin
 				counter <= counter - 1'b1;
 				if (counter_empty) begin
-					state <= rx_i ? STARTED : IDLE;
+					state <= (rx_i != IDLE_POLARITY) ? STARTED : IDLE;
 					counter <= OVERSAMPLING-1;
 				end
 			end
@@ -70,7 +73,7 @@ always @(posedge clk_i) begin
 			CAPTURED: begin
 				counter <= counter - 1'b1;
 				if (counter_empty) begin
-					valid_o <= ~rx_i; // stop bit must be low
+					valid_o <= (rx_i == IDLE_POLARITY); // stop bit must be opposite of start bit
 					state <= IDLE;
 					// wait out the rest of the bit period before restart
 					counter <= (OVERSAMPLING >> 1) - 1'b1 + (OVERSAMPLING & 1'b1);
