@@ -4,10 +4,10 @@ module character_recovery_formal ();
 
 parameter OVERSAMPLING = 17;
 parameter DATA_BITS = 7;
-parameter IDLE_POLARITY = 1;
 
 wire [7:0] char;
 wire valid;
+wire frame_error;
 reg rst;
 reg clk;
 reg rx;
@@ -28,9 +28,9 @@ always @(posedge clk) begin
 	f_hold[HOLD_LENGTH-1] <= rx;
 	f_hold[0:HOLD_LENGTH-2] <= f_hold[1:HOLD_LENGTH-1];
 	if (f_reset_in_past) begin
-		if (!rst && valid) begin
-			assert(f_hold[OFFSET-1] != IDLE_POLARITY);
-			assert(f_hold[HOLD_LENGTH-1] == IDLE_POLARITY);
+		if (!rst && (valid || frame_error)) begin
+			assert(~f_hold[OFFSET-1]);
+			assert(f_hold[HOLD_LENGTH-1] == valid);
 			for (f_i = OVERSAMPLING; f_i < (OVERSAMPLING * (DATA_BITS+1)); f_i = f_i + OVERSAMPLING)
 				assert(f_hold[f_i+(OFFSET-1)] == char[(f_i/OVERSAMPLING)-1]);
 		end
@@ -84,15 +84,15 @@ end
 character_recovery
 #(
 	.OVERSAMPLING(OVERSAMPLING),
-	.IDLE_POLARITY(IDLE_POLARITY),
-	.DATA_BITS(DATA_BITS)
+	.DATA_BITS(DATA_BITS),
 ) character_recovery
 (
 	.rst_i(rst),
 	.clk_i(clk),
 	.rx_i(rx),
 	.char_o(char),
-	.valid_o(valid)
+	.valid_o(valid),
+	.frame_error_o(frame_error),
 );
 
 endmodule
