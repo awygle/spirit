@@ -2,12 +2,16 @@
 
 module character_recovery_formal ();
 
-parameter OVERSAMPLING = 17;
-parameter DATA_BITS = 7;
+parameter OVERSAMPLING = 16;
+parameter DATA_BITS = 8;
+parameter PARITY = 2;
 
-wire [7:0] char;
+localparam PARITY_BITS = (PARITY > 0) ? 1 : 0;
+
+wire [DATA_BITS-1:0] char;
 wire valid;
 wire frame_error;
+wire parity_error;
 reg rst;
 reg clk;
 reg rx;
@@ -21,24 +25,36 @@ end
 
 // Property: all accepted inputs well-formed, no invalid inputs accepted
 localparam OFFSET = (OVERSAMPLING / 2);
-localparam HOLD_LENGTH = ((OVERSAMPLING) * (DATA_BITS + 1)) + OFFSET;
+localparam HOLD_LENGTH = ((OVERSAMPLING) * (DATA_BITS + PARITY_BITS + 1)) + OFFSET;
 reg [HOLD_LENGTH-1:0] f_hold;
 integer f_i;
+wire parity_bit = f_hold[HOLD_LENGTH-OVERSAMPLING-1];
 always @(posedge clk) begin
 	f_hold[HOLD_LENGTH-1] <= rx;
 	f_hold[0:HOLD_LENGTH-2] <= f_hold[1:HOLD_LENGTH-1];
-	if (f_reset_in_past) begin
-		if (!rst && (valid || frame_error)) begin
+	if (f_reset_in_past && ~rst) begin
+		if (valid) begin
 			assert(~f_hold[OFFSET-1]);
-			assert(f_hold[HOLD_LENGTH-1] == valid);
-			for (f_i = OVERSAMPLING; f_i < (OVERSAMPLING * (DATA_BITS+1)); f_i = f_i + OVERSAMPLING)
-				assert(f_hold[f_i+(OFFSET-1)] == char[(f_i/OVERSAMPLING)-1]);
+			assert(f_hold[HOLD_LENGTH-1]);
+			assert(!frame_error);
+			assert(!parity_error);
+			for (f_i = 1; f_i < DATA_BITS+1; f_i = f_i + 1)
+				assert(f_hold[(f_i*OVERSAMPLING)+(OFFSET-1)] == char[f_i-1]);
+		end
+		if (frame_error) begin
+			assert(~f_hold[OFFSET-1]);
+			assert(~f_hold[HOLD_LENGTH-1]);
+			assert(~valid);
+		end
+		if (parity_error) begin
+			assert(^{char[DATA_BITS-1:0], parity_bit} != PARITY[0]);
+			assert(~valid);
 		end
 	end
 end
 
 // Property: assertions of valid are at least 160 cycles apart
-localparam TOTAL_BITS = OVERSAMPLING * (DATA_BITS + 2);
+localparam TOTAL_BITS = OVERSAMPLING * (DATA_BITS + PARITY_BITS + 2);
 reg [$clog2(TOTAL_BITS)-1:0] f_counter;
 initial f_counter = TOTAL_BITS - 1;
 always @(posedge clk) begin
@@ -85,6 +101,7 @@ character_recovery
 #(
 	.OVERSAMPLING(OVERSAMPLING),
 	.DATA_BITS(DATA_BITS),
+	.PARITY(PARITY)
 ) character_recovery
 (
 	.rst_i(rst),
@@ -93,6 +110,7 @@ character_recovery
 	.char_o(char),
 	.valid_o(valid),
 	.frame_error_o(frame_error),
+	.parity_error_o(parity_error)
 );
 
 endmodule
