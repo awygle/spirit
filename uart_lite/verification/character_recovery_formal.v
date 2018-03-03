@@ -97,6 +97,13 @@ always @(posedge clk) begin
 	end
 end
 
+always @(posedge clk) begin
+	if (f_reset_in_past) begin
+		cover(frame_error);
+		cover(parity_error);
+	end
+end
+
 character_recovery
 #(
 	.OVERSAMPLING(OVERSAMPLING),
