@@ -1,0 +1,16 @@
+[options]
+mode prove
+depth 20
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal wrapping_fifo_sync.v
+read_verilog -formal wrapping_fifo_sync_formal.v
+prep -top wrapping_fifo_sync_formal
+memory -nordff
+
+[files]
+wrapping_fifo_sync.v
+verification/wrapping_fifo_sync_formal.v
